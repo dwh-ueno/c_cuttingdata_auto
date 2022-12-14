@@ -17,7 +17,7 @@ file_paths = sorted(glob.glob(os.path.join(r"\\dwhnas1\DWH1\y_yuyama\000_inc_sha
 
 filename_list_duplication = [""]
 for file_path in file_paths:
-    filename = os.path.split(file_path)[-1].replace(f".xlsx", "")
+    filename = file_path.split(sep)[-1].replace(f".xlsx", "")
     filename_list_duplication.append(filename)
 filename_list = list(dict.fromkeys(filename_list_duplication))
 
@@ -59,27 +59,34 @@ if push_button:
     """
     ## 作成しました！
     """
-    
+    wb = openpyxl.load_workbook(path)
+    sheet = wb[filename]
     subprocess.Popen(['start', path], shell=True)
-    
     wb.active = 0
     sheet.sheet_view.tabSelected = True
-    
     wb.save(path)
-    
-    # printOut()
-    
     wb.close()
+    PrintOut()
     """
     ## 印刷しました！
     """
-    
     wb = openpyxl.load_workbook(path)
-    sheet.row_dimensions[1:4].hidden= True
+    sheet = wb[filename]
+    for i in range(1, 5):
+        sheet.row_dimensions[i].hidden=True
     wb.save(path)
     wb.close()
     """
     ## 非表示にしました！
+    """
+    wb = openpyxl.load_workbook(path)
+    sheet = wb[filename]
+    for i in range(1, 5):
+        sheet.row_dimensions[i].hidden=False
+    wb.save(path)
+    wb.close()
+    """
+    ## 表示にしました！
     """
 
 # pyhtonからvbaに変数を渡して，vbaで変数を書き込む
