@@ -1,24 +1,26 @@
 import streamlit as st
-import openpyxl
 import subprocess
-import win32api
-import win32print
 import os
 import glob
 import pyautogui as ag
 import pyperclip
 from time import sleep
+import win32print
+import win32api
+import openpyxl
 
 
 path_ueno = r"\\dwhnas1\DWH1\u_ueno\c_cuttingdata_auto"
+path_cuttingfolder = r"\\dwhnas1\DWH1\泉州電業\泉州_切断資料_自動化用"
 
 
+# 入力欄から切断資料を指定
 st.title('切断資料自動作成')
 filename = st.text_input("切断資料ファイル名（入力）")
 
-# 
+# 選択欄から切断資料を指定
 sep = "\\" if os.name =="nt" else "/"
-file_paths = sorted(glob.glob(os.path.join(path_ueno, "s切断資料自動化\*.xlsx")))
+file_paths = sorted(glob.glob(os.path.join(path_cuttingfolder, "*.xlsx")))
 
 filename_list_duplication = [""]
 for file_path in file_paths:
@@ -27,12 +29,59 @@ for file_path in file_paths:
 filename_list = list(dict.fromkeys(filename_list_duplication))
 
 filename = st.selectbox("切断資料ファイル名（選択）", filename_list)
-path = os.path.join(path_ueno, "s切断資料自動化")
-path = os.path.join(path, f"{filename}.xlsx")
+path = os.path.join(path_cuttingfolder, f"{filename}.xlsx")
 
 wb = openpyxl.load_workbook(path)
-sheet = wb[filename]
+# 切断資料のシートを取得
+sheet_main = wb[filename]
+# 全シートを取得
+sheet_all = wb.sheetnames
 
+col = st.columns(len(sheet_all))
+
+sheet_active_flag = []
+for i, sheet in enumerate(sheet_all):
+    if i==0:
+        sheet_active_flag.append(True)
+    else:
+        sheet_ = col[i].checkbox(label=sheet)
+        sheet_active_flag.append(sheet_)
+
+
+def sheet_activate(sheet_all, path, sheet_activate_flag):
+    wb = openpyxl.load_workbook(path)
+    for sheet in sheet_all:
+        ws = wb[sheet]
+        ws.sheet_view.tabSelected = False
+    wb.save(path)
+    wb.close()
+    
+    wb = openpyxl.load_workbook(path)
+    
+    for i, active in enumerate(sheet_activate_flag):
+        print("ww", i, active)
+        if active:
+            ws = wb.worksheets[i]
+            wb.active = i
+            ws.sheet_view.tabSelected = True
+        elif not active:
+            pass
+    wb.save(path)
+
+
+def sheet_1(sheet_all, filename):
+    wb = openpyxl.load_workbook(path)
+    for sheet in sheet_all:
+        ws = wb[sheet]
+        if sheet == filename:
+            print(filename)
+            ws.sheet_view.tabSelected = True
+        else:
+            ws.sheet_view.tabSelected = False
+    wb.save(path)
+    wb.close()
+
+# サイドバー
 st.sidebar.header('編集画面')
 edit_form = st.sidebar.form('edit_form')
 disconnection_date = edit_form.date_input('切断期日')
@@ -40,6 +89,7 @@ order_number = edit_form.number_input('受注番号', 0,  1000000, 0)
 number_of_order = edit_form.number_input('受注数', 0,  10000, 0)
 deadline = edit_form.date_input('納期')
 push_button = edit_form.form_submit_button()
+
 
 # Excelにて切断資料を印刷する
 def PrintOut():
@@ -108,6 +158,8 @@ def label_main(excel_path):
     sleep(2)
     ag.press("Enter")
     sleep(2)
+    ag.press("up", presses=10)
+    sleep(1)
     ag.press("r")
     sleep(1)
     ag.press("t")
@@ -155,17 +207,17 @@ if push_button:
 
     # 1-4行目を表示する
     wb = openpyxl.load_workbook(path)
-    sheet = wb[filename]
+    sheet_main = wb[filename]
     for i in range(1, 5):
-        sheet.row_dimensions[i].hidden=False
+        sheet_main.row_dimensions[i].hidden=False
     wb.save(path)
     wb.close()
     
     # 切断期日，受注番号，受注数，納期を切断資料に反映する
-    sheet["O1"] = disconnection_date.strftime("%Y/%m/%d")
-    sheet["O2"].value = order_number
-    sheet["O3"].value = number_of_order
-    sheet["O4"] = deadline.strftime("%Y/%m/%d")
+    sheet_main["O1"] = disconnection_date.strftime("%Y/%m/%d")
+    sheet_main["O2"].value = order_number
+    sheet_main["O3"].value = number_of_order
+    sheet_main["O4"] = deadline.strftime("%Y/%m/%d")
     wb.save(path)
     wb.close()
     
@@ -175,26 +227,31 @@ if push_button:
     ag.hotkey("ctrl", "s")
     sleep(1)
     ag.hotkey("alt", "f4")
-    sleep(10)
+    sleep(5)
+    
+    # 選択したシートをアクティブ化する
+    sheet_activate(sheet_all, path, sheet_active_flag)
     
     # 切断資料を印刷する
     PrintOut()
-    sleep(10)
+    sleep(5)
     st.warning("切断資料を印刷しました！")
     
     # 1-4行目を非表示にする
     wb = openpyxl.load_workbook(path)
-    sheet = wb[filename]
+    sheet_main = wb[filename]
     for i in range(1, 5):
-        sheet.row_dimensions[i].hidden=True
+        sheet_main.row_dimensions[i].hidden=True
     wb.save(path)
     wb.close()
     
+    # 切断資料のみアクティブ化する
+    sheet_1(sheet_all, filename)
+    
     # ラベルプリンタを印刷する
     label_main(path)
-
     
-# pyhtonからvbaに変数を渡して，vbaで変数を書き込む
-# streamlitをキルして，エクセルファイルを立ち上げるコマンドを入力
+
+
 
 # 雛形を入れるフォルダ，切断資料を入れるフォルダのパスへの変更が必要
