@@ -8,10 +8,12 @@ from time import sleep
 import win32print
 import win32api
 import openpyxl
+from typing import List, Dict, Tuple
 
 
 path_ueno = r"\\dwhnas1\DWH1\u_ueno\c_cuttingdata_auto"
 path_cuttingfolder = r"\\dwhnas1\DWH1\泉州電業\泉州_切断資料_自動化用"
+path_label_template_folder = r"\\dwhnas1\DWH1\u_ueno\c_cuttingdata_auto\s切断資料_雛形_保管場所"
 
 
 # 入力欄から切断資料を指定
@@ -22,11 +24,11 @@ filename = st.text_input("切断資料ファイル名（入力）")
 sep = "\\" if os.name =="nt" else "/"
 file_paths = sorted(glob.glob(os.path.join(path_cuttingfolder, "*.xlsx")))
 
-filename_list_duplication = [""]
+filename_lst_duplication = [""]
 for file_path in file_paths:
     filename = file_path.split(sep)[-1].replace(f".xlsx", "")
-    filename_list_duplication.append(filename)
-filename_list = list(dict.fromkeys(filename_list_duplication))
+    filename_lst_duplication.append(filename)
+filename_list = list(dict.fromkeys(filename_lst_duplication))
 
 filename = st.selectbox("切断資料ファイル名（選択）", filename_list)
 path = os.path.join(path_cuttingfolder, f"{filename}.xlsx")
@@ -47,8 +49,16 @@ for i, sheet in enumerate(sheet_all):
         sheet_ = col[i].checkbox(label=sheet)
         sheet_active_flag.append(sheet_)
 
+path_label_template = sorted(glob.glob(os.path.join(path_label_template_folder, "*.jlb")))
+label_template_lst_duplication = []
+for path in path_label_template:
+    templatename = path.split(sep)[-1].replace(".jlb", "")
+    label_template_lst_duplication.append(templatename)
+label_template_lst = list(dict.fromkeys(label_template_lst_duplication))
 
-def sheet_activate(sheet_all, path, sheet_activate_flag):
+label_template = st.radio("切断資料雛形", label_template_lst)
+
+def sheet_activate(sheet_all:List[str], path:str, sheet_activate_flag:List[bool]):
     wb = openpyxl.load_workbook(path)
     for sheet in sheet_all:
         ws = wb[sheet]
@@ -69,7 +79,7 @@ def sheet_activate(sheet_all, path, sheet_activate_flag):
     wb.save(path)
 
 
-def sheet_1(sheet_all, filename):
+def sheet_1(sheet_all:List[str], filename:str):
     wb = openpyxl.load_workbook(path)
     for sheet in sheet_all:
         ws = wb[sheet]
@@ -103,7 +113,7 @@ def PrintOut():
     )
 
 # ラベル編集ソフトを用いて，編集した切断資料を読み込んで印刷する
-def label_main(excel_path):
+def label_main(excel_path:str):
     # ラベルソフトで正常に切断資料を読み込むために，切断資料を開いて保存したのち閉じる
     subprocess.Popen(['start', excel_path], shell=True)
     sleep(5)
