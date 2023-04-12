@@ -49,14 +49,17 @@ for i, sheet in enumerate(sheet_all):
         sheet_ = col[i].checkbox(label=sheet)
         sheet_active_flag.append(sheet_)
 
+
+# 雛形選択
 path_label_template = sorted(glob.glob(os.path.join(path_label_template_folder, "*.jlb")))
 label_template_lst_duplication = []
-for path in path_label_template:
-    templatename = path.split(sep)[-1].replace(".jlb", "")
+for path_label in path_label_template:
+    templatename = path_label.split(sep)[-1].replace(".jlb", "")
     label_template_lst_duplication.append(templatename)
 label_template_lst = list(dict.fromkeys(label_template_lst_duplication))
 
 label_template = st.radio("切断資料雛形", label_template_lst)
+
 
 def sheet_activate(sheet_all:List[str], path:str, sheet_activate_flag:List[bool]):
     wb = openpyxl.load_workbook(path)
@@ -113,7 +116,7 @@ def PrintOut():
     )
 
 # ラベル編集ソフトを用いて，編集した切断資料を読み込んで印刷する
-def label_main(excel_path:str):
+def label_main(excel_path:str, label_template:str):
     # ラベルソフトで正常に切断資料を読み込むために，切断資料を開いて保存したのち閉じる
     subprocess.Popen(['start', excel_path], shell=True)
     sleep(5)
@@ -133,6 +136,7 @@ def label_main(excel_path:str):
     
     # 切断資料の雛形を読み込む
     ag.press("tab", presses=3)
+    ag.write(label_template)
     ag.press("Enter")
     sleep(0.5)
     ag.hotkey("alt", "n")
@@ -259,7 +263,7 @@ if push_button:
     sheet_1(sheet_all, filename)
     
     # ラベルプリンタを印刷する
-    label_main(path)
+    label_main(path, label_template)
     
 
 
