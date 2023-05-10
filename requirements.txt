@@ -1,0 +1,5 @@
+pyautogui
+pyperclip
+win32print
+win32app
+openpyxl
