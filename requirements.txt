@@ -1,5 +1,5 @@
-pyautogui==0.9.53
-pyperclip==1.8.2
-pywin32==304
-pywin32-ctypes==0.2.0
-openpyxl==3.0.10
+pyautogui
+pyperclip
+pywin32
+pywin32-ctypes
+openpyxl
