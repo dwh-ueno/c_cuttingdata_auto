@@ -1,3 +1,4 @@
+pyexcel
 pyautogui
 pyperclip
 openpyxl
