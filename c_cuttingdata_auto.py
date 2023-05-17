@@ -5,7 +5,7 @@ import glob
 import pyautogui as ag
 import pyperclip
 from time import sleep
-import win32print
+# import win32print
 import win32api
 import openpyxl
 from typing import List, Dict, Tuple
